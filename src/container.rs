@@ -45,6 +45,13 @@ impl Container {
         }
     }
 
+    pub fn state<'a>(&self) -> &'a str {
+        let state = unsafe {
+            CStr::from_ptr(((*self.container).state.unwrap())(self.container))
+        };
+        str::from_utf8(state.to_bytes()).unwrap()
+    }
+
     pub fn is_running(&self) -> bool {
         unsafe {
             ((*self.container).is_running.unwrap())(self.container) != 0
@@ -69,6 +76,11 @@ mod tests {
         // TODO: Automate this test.
         assert!(Container::new("foobar", None).unwrap().is_defined());
         assert!(!Container::new("does-not-exist", None).unwrap().is_defined());
+    }
+
+    #[test]
+    fn test_state() {
+        assert_eq!("RUNNING", Container::new("foobar", None).unwrap().state());
     }
 
     #[test]
