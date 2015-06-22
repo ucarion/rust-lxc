@@ -38,6 +38,12 @@ impl Container {
             unsafe { str::from_utf8(CStr::from_ptr(state).to_bytes()).unwrap() }
         }).collect()
     }
+
+    pub fn is_defined(&self) -> bool {
+        unsafe {
+            ((*self.container).is_defined.unwrap())(self.container) != 0
+        }
+    }
 }
 
 #[cfg(test)]
@@ -48,5 +54,14 @@ mod tests {
     fn test_states() {
         println!("{:?}", Container::states());
         assert!(false);
+    }
+
+    #[test]
+    fn test_is_defined() {
+        // You must run lxc-create -n foobar ... to make this test pass
+        //
+        // TODO: Automate this test.
+        assert!(Container::new("foobar", None).unwrap().is_defined());
+        assert!(!Container::new("does-not-exist", None).unwrap().is_defined());
     }
 }
