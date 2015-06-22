@@ -1,13 +1,14 @@
 extern crate libc;
 
-pub mod ffi;
-
-use ffi::lxccontainer;
-
 use std::ffi::CStr;
 use std::str;
 
+pub mod ffi;
+pub mod container;
+
 pub fn version<'a>() -> &'a str {
+    use ffi::lxccontainer;
+
     let version = unsafe { CStr::from_ptr(lxccontainer::lxc_get_version()) };
     str::from_utf8(version.to_bytes()).unwrap()
 }
