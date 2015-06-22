@@ -44,6 +44,12 @@ impl Container {
             ((*self.container).is_defined.unwrap())(self.container) != 0
         }
     }
+
+    pub fn is_running(&self) -> bool {
+        unsafe {
+            ((*self.container).is_running.unwrap())(self.container) != 0
+        }
+    }
 }
 
 #[cfg(test)]
@@ -63,5 +69,11 @@ mod tests {
         // TODO: Automate this test.
         assert!(Container::new("foobar", None).unwrap().is_defined());
         assert!(!Container::new("does-not-exist", None).unwrap().is_defined());
+    }
+
+    #[test]
+    fn test_is_running() {
+        // TODO: Automate this test.
+        assert!(Container::new("foobar", None).unwrap().is_running());
     }
 }
