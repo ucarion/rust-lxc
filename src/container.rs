@@ -20,6 +20,14 @@ macro_rules! lxc_call {
     };
 }
 
+fn check_lxc_error(lxc_return_code: u8, error_msg: &'static str) -> Result {
+    if lxc_return_code != 0 {
+        Ok(())
+    } else {
+        Err(error_msg)
+    }
+}
+
 pub struct Container {
     container: *mut lxccontainer::Struct_lxc_container
 }
@@ -76,27 +84,13 @@ impl Container {
     }
 
     pub fn freeze(&mut self) -> Result {
-        let ret = unsafe {
-            lxc_call!(self.container, freeze) != 0
-        };
-
-        if ret {
-            Ok(())
-        } else {
-            Err("Freezing the container failed")
-        }
+        check_lxc_error(unsafe { lxc_call!(self.container, freeze) },
+                        "Freezing the container failed")
     }
 
     pub fn unfreeze(&mut self) -> Result {
-        let ret = unsafe {
-            lxc_call!(self.container, unfreeze) != 0
-        };
-
-        if ret {
-            Ok(())
-        } else {
-            Err("Unfreezing the container failed")
-        }
+        check_lxc_error(unsafe { lxc_call!(self.container, unfreeze) },
+                        "Unfreezing the container failed")
     }
 
     pub fn init_pid(&self) -> pid_t {
@@ -104,16 +98,12 @@ impl Container {
     }
 
     pub fn load_config(&mut self, alt_file: Option<&str>) -> Result {
-        let alt_file = alt_file.map_or(ptr::null(), str::as_ptr) as *const i8;
-        let ret = unsafe {
-            lxc_call!(self.container, load_config, alt_file)
-        };
+        let alt_file = alt_file.map_or(ptr::null(), |alt_file| {
+            CString::new(alt_file).unwrap().as_ptr()
+        });
+        let ret = unsafe { lxc_call!(self.container, load_config, alt_file) };
 
-        if ret != 0 {
-            Ok(())
-        } else {
-            Err("Loading config for the container failed")
-        }
+        check_lxc_error(ret, "Loading config for the container failed")
     }
 }
 
