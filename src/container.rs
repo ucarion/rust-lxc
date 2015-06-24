@@ -1,4 +1,5 @@
 use std::str;
+use std::result;
 use std::ptr;
 use std::ffi::{CStr, CString};
 use libc::{c_char, pid_t};
@@ -141,6 +142,17 @@ impl Container {
     pub fn want_close_all_fds(&self, state: bool) -> bool {
         let state = if state { 1 } else { 0 };
         unsafe { lxc_call!(self.container, want_close_all_fds, state) != 0 }
+    }
+
+    pub fn config_file_name(&self)
+            -> result::Result<String, &'static str> {
+        let config_ptr = unsafe { lxc_call!(self.container, config_file_name) };
+        if config_ptr.is_null() {
+            Err("Getting config file name failed")
+        } else {
+            let config = unsafe { CStr::from_ptr(config_ptr).to_bytes() };
+            Ok(str::from_utf8(config).unwrap().to_owned())
+        }
     }
 
     pub fn wait(&self, state: &str, timeout: i32) -> bool {
