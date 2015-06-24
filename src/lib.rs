@@ -16,6 +16,6 @@ pub fn version<'a>() -> &'a str {
 }
 
 #[test]
-fn it_works() {
+fn test_version() {
     assert_eq!("1.1.2", version());
 }
