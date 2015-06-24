@@ -142,6 +142,11 @@ impl Container {
         let state = if state { 1 } else { 0 };
         unsafe { lxc_call!(self.container, want_close_all_fds, state) != 0 }
     }
+
+    pub fn wait(&self, state: &str, timeout: i32) -> bool {
+        let state = CString::new(state).unwrap().as_ptr();
+        unsafe { lxc_call!(self.container, wait, state, timeout) != 0 }
+    }
 }
 
 #[cfg(test)]
