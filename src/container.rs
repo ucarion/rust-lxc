@@ -6,6 +6,20 @@ use libc::pid_t;
 use super::Result;
 use ffi::lxccontainer;
 
+macro_rules! lxc_call {
+    // lxc_call!(self.container, is_defined)
+    //   => ((*self.container).is_defined.unwrap())(self.container)
+    ($container: expr, $func: ident) => {
+        ((*$container).$func.unwrap())($container)
+    };
+
+    // lxc_call!(self.container, load_config, alt_file)
+    //   => ((*self.container).load_config.unwrap())(self.container, alt_file)
+    ($container: expr, $func: ident, $( $x:expr ),*) => {
+        ((*$container).$func.unwrap())($container, $($x,)*)
+    };
+}
+
 pub struct Container {
     container: *mut lxccontainer::Struct_lxc_container
 }
@@ -44,26 +58,26 @@ impl Container {
 
     pub fn is_defined(&self) -> bool {
         unsafe {
-            ((*self.container).is_defined.unwrap())(self.container) != 0
+            lxc_call!(self.container, is_defined) != 0
         }
     }
 
     pub fn state<'a>(&self) -> &'a str {
         let state = unsafe {
-            CStr::from_ptr(((*self.container).state.unwrap())(self.container))
+            CStr::from_ptr(lxc_call!(self.container, state))
         };
         str::from_utf8(state.to_bytes()).unwrap()
     }
 
     pub fn is_running(&self) -> bool {
         unsafe {
-            ((*self.container).is_running.unwrap())(self.container) != 0
+            lxc_call!(self.container, is_running) != 0
         }
     }
 
     pub fn freeze(&mut self) -> Result {
         let ret = unsafe {
-            ((*self.container).freeze.unwrap())(self.container) != 0
+            lxc_call!(self.container, freeze) != 0
         };
 
         if ret {
@@ -75,7 +89,7 @@ impl Container {
 
     pub fn unfreeze(&mut self) -> Result {
         let ret = unsafe {
-            ((*self.container).unfreeze.unwrap())(self.container) != 0
+            lxc_call!(self.container, unfreeze) != 0
         };
 
         if ret {
@@ -86,13 +100,13 @@ impl Container {
     }
 
     pub fn init_pid(&self) -> pid_t {
-        unsafe { ((*self.container).init_pid.unwrap())(self.container) }
+        unsafe { lxc_call!(self.container, init_pid) }
     }
 
     pub fn load_config(&mut self, alt_file: Option<&str>) -> Result {
         let alt_file = alt_file.map_or(ptr::null(), str::as_ptr) as *const i8;
         let ret = unsafe {
-            ((*self.container).load_config.unwrap())(self.container, alt_file)
+            lxc_call!(self.container, load_config, alt_file)
         };
 
         if ret != 0 {
@@ -121,7 +135,7 @@ mod tests {
         // TODO: Automate this test.
         assert!(Container::new("foobar", None).unwrap().is_defined());
         assert!(!Container::new("does-not-exist", None).unwrap().is_defined());
-    }
+   }
 
     #[test]
     fn test_state() {
