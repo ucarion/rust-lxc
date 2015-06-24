@@ -132,6 +132,16 @@ impl Container {
         check_lxc_error(unsafe { lxc_call!(self.container, stop) },
                         "Stopping the container failed")
     }
+
+    pub fn want_daemonize(&self, state: bool) -> bool {
+        let state = if state { 1 } else { 0 };
+        unsafe { lxc_call!(self.container, want_daemonize, state) != 0 }
+    }
+
+    pub fn want_close_all_fds(&self, state: bool) -> bool {
+        let state = if state { 1 } else { 0 };
+        unsafe { lxc_call!(self.container, want_close_all_fds, state) != 0 }
+    }
 }
 
 #[cfg(test)]
