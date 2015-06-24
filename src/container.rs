@@ -1,7 +1,7 @@
 use std::str;
 use std::ptr;
 use std::ffi::{CStr, CString};
-use libc::pid_t;
+use libc::{c_char, pid_t};
 
 use super::Result;
 use ffi::lxccontainer;
@@ -106,14 +106,23 @@ impl Container {
         check_lxc_error(ret, "Loading config for the container failed")
     }
 
-    pub fn start_with_args(&mut self, useinit: bool, argv: &[&str]) -> Result {
-        let useinit = if useinit { 1 } else { 0 };
+    pub fn start_with_args(&mut self, use_init: bool, argv: &[&str]) -> Result {
         let argv_ptrs: Vec<_> = argv.iter().map(|&arg| {
             CString::new(arg).unwrap().as_ptr()
         }).collect();
 
+        self.start_internal(use_init, argv_ptrs.as_ptr())
+    }
+
+    pub fn start(&mut self, use_init: bool) -> Result {
+        self.start_internal(use_init, ptr::null())
+    }
+
+    fn start_internal(&mut self, use_init: bool, argv: *const *const c_char)
+            -> Result {
+        let use_init = if use_init { 1 } else { 0 };
         let ret = unsafe {
-            lxc_call!(self.container, start, useinit, argv_ptrs.as_ptr())
+            lxc_call!(self.container, start, use_init, argv)
         };
 
         check_lxc_error(ret, "Starting the container failed")
