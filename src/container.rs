@@ -127,6 +127,11 @@ impl Container {
 
         check_lxc_error(ret, "Starting the container failed")
     }
+
+    pub fn stop(&mut self) -> Result {
+        check_lxc_error(unsafe { lxc_call!(self.container, stop) },
+                        "Stopping the container failed")
+    }
 }
 
 #[cfg(test)]
