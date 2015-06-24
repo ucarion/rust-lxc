@@ -25,19 +25,20 @@ impl Container {
         }
     }
 
-    // TODO: Test this
-    pub fn states<'a>() -> Vec<&'a str> {
-        let num_states = unsafe {
-            lxccontainer::lxc_get_wait_states(ptr::null_mut())
-        };
+    // TODO: Why doesn't this work?
+    //
+    // pub fn states<'a>() -> Vec<&'a str> {
+    //     let num_states = unsafe {
+    //         lxccontainer::lxc_get_wait_states(ptr::null_mut())
+    //     };
 
-        let mut states = Vec::with_capacity(num_states as usize);
-        unsafe { lxccontainer::lxc_get_wait_states(states.as_mut_ptr()); }
+    //     let mut states = Vec::with_capacity(num_states as usize);
+    //     unsafe { lxccontainer::lxc_get_wait_states(states.as_mut_ptr()); }
 
-        states.iter().map(|&state| {
-            unsafe { str::from_utf8(CStr::from_ptr(state).to_bytes()).unwrap() }
-        }).collect()
-    }
+    //     states.iter().map(|&state| {
+    //         unsafe { str::from_utf8(CStr::from_ptr(state).to_bytes()).unwrap() }
+    //     }).collect()
+    // }
 
     pub fn is_defined(&self) -> bool {
         unsafe {
@@ -63,11 +64,12 @@ impl Container {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_states() {
-        println!("{:?}", Container::states());
-        assert!(false);
-    }
+    // TODO: Why is this returning an empty list?
+    // #[test]
+    // fn test_states() {
+    //     println!("{:?}", Container::states());
+    //     assert!(false);
+    // }
 
     #[test]
     fn test_is_defined() {
