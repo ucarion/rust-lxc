@@ -88,6 +88,19 @@ impl Container {
     pub fn init_pid(&self) -> pid_t {
         unsafe { ((*self.container).init_pid.unwrap())(self.container) }
     }
+
+    pub fn load_config(&mut self, alt_file: Option<&str>) -> Result {
+        let alt_file = alt_file.map_or(ptr::null(), str::as_ptr) as *const i8;
+        let ret = unsafe {
+            ((*self.container).load_config.unwrap())(self.container, alt_file)
+        };
+
+        if ret != 0 {
+            Ok(())
+        } else {
+            Err("Loading config for the container failed")
+        }
+    }
 }
 
 #[cfg(test)]
