@@ -2,6 +2,7 @@ use std::str;
 use std::ptr;
 use std::ffi::{CStr, CString};
 
+use super::Result;
 use ffi::lxccontainer;
 
 pub struct Container {
@@ -58,6 +59,30 @@ impl Container {
             ((*self.container).is_running.unwrap())(self.container) != 0
         }
     }
+
+    pub fn freeze(&mut self) -> Result {
+        let ret = unsafe {
+            ((*self.container).freeze.unwrap())(self.container) != 0
+        };
+
+        if ret {
+            Ok(())
+        } else {
+            Err("Freezing the container failed")
+        }
+    }
+
+    pub fn unfreeze(&mut self) -> Result {
+        let ret = unsafe {
+            ((*self.container).unfreeze.unwrap())(self.container) != 0
+        };
+
+        if ret {
+            Ok(())
+        } else {
+            Err("Unfreezing the container failed")
+        }
+    }
 }
 
 #[cfg(test)]
@@ -89,5 +114,13 @@ mod tests {
     fn test_is_running() {
         // TODO: Automate this test.
         assert!(Container::new("foobar", None).unwrap().is_running());
+    }
+
+    #[test]
+    fn test_freeze_unfreeze() {
+        let mut c = Container::new("foobar", None).unwrap();
+        c.freeze().unwrap();
+        assert_eq!("FROZEN", c.state());
+        c.unfreeze().unwrap();
     }
 }
