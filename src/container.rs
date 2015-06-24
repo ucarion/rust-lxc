@@ -105,6 +105,19 @@ impl Container {
 
         check_lxc_error(ret, "Loading config for the container failed")
     }
+
+    pub fn start_with_args(&mut self, useinit: bool, argv: &[&str]) -> Result {
+        let useinit = if useinit { 1 } else { 0 };
+        let argv_ptrs: Vec<_> = argv.iter().map(|&arg| {
+            CString::new(arg).unwrap().as_ptr()
+        }).collect();
+
+        let ret = unsafe {
+            lxc_call!(self.container, start, useinit, argv_ptrs.as_ptr())
+        };
+
+        check_lxc_error(ret, "Starting the container failed")
+    }
 }
 
 #[cfg(test)]

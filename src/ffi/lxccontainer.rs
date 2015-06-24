@@ -47,7 +47,7 @@ pub struct Struct_lxc_container {
                                                        *mut Struct_lxc_container,
                                                    useinit: ::libc::c_int,
                                                    argv:
-                                                       *const *mut ::libc::c_char)
+                                                       *const *const ::libc::c_char)
                                          -> u8>,
     pub startl: ::std::option::Option<extern "C" fn(c:
                                                         *mut Struct_lxc_container,
