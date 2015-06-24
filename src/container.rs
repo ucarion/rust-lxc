@@ -1,6 +1,7 @@
 use std::str;
 use std::ptr;
 use std::ffi::{CStr, CString};
+use libc::pid_t;
 
 use super::Result;
 use ffi::lxccontainer;
@@ -82,6 +83,10 @@ impl Container {
         } else {
             Err("Unfreezing the container failed")
         }
+    }
+
+    pub fn init_pid(&self) -> pid_t {
+        unsafe { ((*self.container).init_pid.unwrap())(self.container) }
     }
 }
 
