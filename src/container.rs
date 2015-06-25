@@ -33,7 +33,7 @@ pub struct Container {
 }
 
 impl Container {
-    pub fn new(name: &str, config_path: Option<&str>) -> Option<Container> {
+    pub fn new(name: &str, config_path: Option<&str>) -> Result<Container> {
         let name = CString::new(name).unwrap().as_ptr();
         let config_path = config_path.map_or(ptr::null(), |config_path| {
             CString::new(config_path).unwrap().as_ptr()
@@ -43,9 +43,9 @@ impl Container {
         };
 
         if container.is_null() {
-            None
+            Err(LxcError::Unknown("Creating the container failed"))
         } else {
-            Some(Container { container: container })
+            Ok(Container { container: container })
         }
     }
 
