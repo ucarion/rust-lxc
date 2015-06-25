@@ -157,6 +157,16 @@ impl Container {
         let state = CString::new(state).unwrap().as_ptr();
         unsafe { lxc_call!(self.container, wait, state, timeout) != 0 }
     }
+
+    pub fn set_config_item(&mut self, key: &str, value: &str) -> Result<()> {
+        let key = CString::new(key).unwrap().as_ptr();
+        let value = CString::new(value).unwrap().as_ptr();
+        let ret = unsafe {
+            lxc_call!(self.container, set_config_item, key, value)
+        };
+
+        check_lxc_error(ret, "Setting the config item failed")
+    }
 }
 
 #[cfg(test)]
