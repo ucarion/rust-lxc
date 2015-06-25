@@ -181,10 +181,89 @@ impl Container {
     }
 
     pub fn save_config(&mut self, alt_file: &str) -> Result<()> {
-        let alt_file = CString::new(path).unwrap().as_ptr();
+        let alt_file = CString::new(alt_file).unwrap().as_ptr();
         let ret = unsafe { lxc_call!(self.container, save_config, alt_file) };
 
         check_lxc_error(ret, "Saving config to file failed")
+    }
+
+    pub fn create(&mut self, template: &str, bdev_type: &str,
+            specs: &mut BDevSpecs, flags: i32, argv: &[&str]) -> Result<()> {
+
+        let template = CString::new(template).unwrap().as_ptr();
+        let bdev_type = CString::new(bdev_type).unwrap().as_ptr();
+        let specs: *mut _ = &mut specs.bdev_specs;
+        let argv: Vec<_> = argv.iter().map(|&arg| {
+            CString::new(arg).unwrap().as_ptr() as *mut i8
+        }).collect();
+        let ret = unsafe {
+            lxc_call!(self.container, create, template, bdev_type, specs, flags,
+                      argv.as_ptr())
+        };
+
+        check_lxc_error(ret, "Creating container failed")
+    }
+}
+
+pub struct BDevSpecs {
+    bdev_specs: lxccontainer::Struct_bdev_specs
+}
+
+impl BDevSpecs {
+    pub fn new(fs_type: String, fs_size: u64, zfs: Option<ZfsRoot>,
+            lvm: Option<Lvm>, dir: String) -> BDevSpecs {
+        let fs_type = CString::new(fs_type).unwrap().as_ptr() as *mut i8;
+        let zfs = zfs.unwrap_or(ZfsRoot::new(None));
+        let lvm = lvm.unwrap_or(Lvm::new(None, None, None));
+        let dir = CString::new(dir).unwrap().as_ptr() as *mut i8;
+
+        BDevSpecs { bdev_specs: lxccontainer::Struct_bdev_specs {
+            fstype: fs_type,
+            fssize: fs_size,
+            zfs: zfs.zfs_root,
+            lvm: lvm.lvm,
+            dir: dir
+        }}
+    }
+}
+
+pub struct ZfsRoot {
+    zfs_root: lxccontainer::Struct_Unnamed1
+}
+
+impl ZfsRoot {
+    pub fn new(zfs_root: Option<String>) -> ZfsRoot {
+        let zfs_root = zfs_root.map_or(ptr::null_mut(), { |zfs_root|
+            CString::new(zfs_root).unwrap().as_ptr() as *mut i8
+        });
+        ZfsRoot { zfs_root: lxccontainer::Struct_Unnamed1 {
+            zfsroot: zfs_root
+        }}
+    }
+}
+
+pub struct Lvm {
+    lvm: lxccontainer::Struct_Unnamed2
+}
+
+impl Lvm {
+    pub fn new(vg: Option<String>, lv: Option<String>, thinpool: Option<String>)
+            -> Lvm {
+        let vg = vg.map_or(ptr::null_mut(), { |vg|
+            CString::new(vg).unwrap().as_ptr() as *mut i8
+        });
+        let lv = lv.map_or(ptr::null_mut(), { |lv|
+            CString::new(lv).unwrap().as_ptr() as *mut i8
+        });
+        let thinpool = thinpool.map_or(ptr::null_mut(), { |thinpool|
+            CString::new(thinpool).unwrap().as_ptr() as *mut i8
+        });
+
+        Lvm { lvm: lxccontainer::Struct_Unnamed2 {
+            vg: vg,
+            lv: lv,
+            thinpool: thinpool
+        }}
     }
 }
 
