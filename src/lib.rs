@@ -6,7 +6,12 @@ use std::str;
 pub mod ffi;
 pub mod container;
 
-pub type Result = std::result::Result<(), &'static str>;
+pub type Result<T> = std::result::Result<T, LxcError>;
+
+#[derive(Debug)]
+pub enum LxcError {
+    Unknown(&'static str)
+}
 
 pub fn version<'a>() -> &'a str {
     use ffi::lxccontainer;

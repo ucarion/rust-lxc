@@ -1,10 +1,9 @@
 use std::str;
-use std::result;
 use std::ptr;
 use std::ffi::{CStr, CString};
 use libc::{c_char, pid_t};
 
-use super::Result;
+use super::{Result, LxcError};
 use ffi::lxccontainer;
 
 macro_rules! lxc_call {
@@ -21,11 +20,11 @@ macro_rules! lxc_call {
     };
 }
 
-fn check_lxc_error(lxc_return_code: u8, error_msg: &'static str) -> Result {
+fn check_lxc_error(lxc_return_code: u8, error_msg: &'static str) -> Result<()> {
     if lxc_return_code != 0 {
         Ok(())
     } else {
-        Err(error_msg)
+        Err(LxcError::Unknown(error_msg))
     }
 }
 
@@ -84,12 +83,12 @@ impl Container {
         }
     }
 
-    pub fn freeze(&mut self) -> Result {
+    pub fn freeze(&mut self) -> Result<()> {
         check_lxc_error(unsafe { lxc_call!(self.container, freeze) },
                         "Freezing the container failed")
     }
 
-    pub fn unfreeze(&mut self) -> Result {
+    pub fn unfreeze(&mut self) -> Result<()> {
         check_lxc_error(unsafe { lxc_call!(self.container, unfreeze) },
                         "Unfreezing the container failed")
     }
@@ -98,7 +97,7 @@ impl Container {
         unsafe { lxc_call!(self.container, init_pid) }
     }
 
-    pub fn load_config(&mut self, alt_file: Option<&str>) -> Result {
+    pub fn load_config(&mut self, alt_file: Option<&str>) -> Result<()> {
         let alt_file = alt_file.map_or(ptr::null(), |alt_file| {
             CString::new(alt_file).unwrap().as_ptr()
         });
@@ -107,7 +106,7 @@ impl Container {
         check_lxc_error(ret, "Loading config for the container failed")
     }
 
-    pub fn start_with_args(&mut self, use_init: bool, argv: &[&str]) -> Result {
+    pub fn start_with_args(&mut self, use_init: bool, argv: &[&str]) -> Result<()> {
         let argv_ptrs: Vec<_> = argv.iter().map(|&arg| {
             CString::new(arg).unwrap().as_ptr()
         }).collect();
@@ -115,12 +114,12 @@ impl Container {
         self.start_internal(use_init, argv_ptrs.as_ptr())
     }
 
-    pub fn start(&mut self, use_init: bool) -> Result {
+    pub fn start(&mut self, use_init: bool) -> Result<()> {
         self.start_internal(use_init, ptr::null())
     }
 
     fn start_internal(&mut self, use_init: bool, argv: *const *const c_char)
-            -> Result {
+            -> Result<()> {
         let use_init = if use_init { 1 } else { 0 };
         let ret = unsafe {
             lxc_call!(self.container, start, use_init, argv)
@@ -129,7 +128,7 @@ impl Container {
         check_lxc_error(ret, "Starting the container failed")
     }
 
-    pub fn stop(&mut self) -> Result {
+    pub fn stop(&mut self) -> Result<()> {
         check_lxc_error(unsafe { lxc_call!(self.container, stop) },
                         "Stopping the container failed")
     }
@@ -144,11 +143,10 @@ impl Container {
         unsafe { lxc_call!(self.container, want_close_all_fds, state) != 0 }
     }
 
-    pub fn config_file_name(&self)
-            -> result::Result<String, &'static str> {
+    pub fn config_file_name(&self) -> Result<String> {
         let config_ptr = unsafe { lxc_call!(self.container, config_file_name) };
         if config_ptr.is_null() {
-            Err("Getting config file name failed")
+            Err(LxcError::Unknown("Getting config file name failed"))
         } else {
             let config = unsafe { CStr::from_ptr(config_ptr).to_bytes() };
             Ok(str::from_utf8(config).unwrap().to_owned())
