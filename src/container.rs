@@ -179,6 +179,13 @@ impl Container {
         check_lxc_error(unsafe { lxc_call!(self.container, destroy) },
                         "Destroying the container failed")
     }
+
+    pub fn save_config(&mut self, alt_file: &str) -> Result<()> {
+        let alt_file = CString::new(path).unwrap().as_ptr();
+        let ret = unsafe { lxc_call!(self.container, save_config, alt_file) };
+
+        check_lxc_error(ret, "Saving config to file failed")
+    }
 }
 
 #[cfg(test)]
