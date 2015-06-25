@@ -167,6 +167,13 @@ impl Container {
 
         check_lxc_error(ret, "Setting the config item failed")
     }
+
+    pub fn set_config_path(&mut self, path: &str) -> Result<()> {
+        let path = CString::new(path).unwrap().as_ptr();
+        let ret = unsafe { lxc_call!(self.container, set_config_path, path) };
+
+        check_lxc_error(ret, "Setting the config path failed")
+    }
 }
 
 #[cfg(test)]
