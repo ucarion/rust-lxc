@@ -174,6 +174,11 @@ impl Container {
 
         check_lxc_error(ret, "Setting the config path failed")
     }
+
+    pub fn destroy(&mut self) -> Result<()> {
+        check_lxc_error(unsafe { lxc_call!(self.container, destroy) },
+                        "Destroying the container failed")
+    }
 }
 
 #[cfg(test)]
