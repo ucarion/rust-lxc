@@ -15,7 +15,7 @@ macro_rules! lxc_call {
 
     // lxc_call!(self.container, load_config, alt_file)
     //   => ((*self.container).load_config.unwrap())(self.container, alt_file)
-    ($container: expr, $func: ident, $( $x:expr ),*) => {
+    ($container: expr, $func: ident, $( $x: expr ),*) => {
         ((*$container).$func.unwrap())($container, $($x,)*)
     };
 }
