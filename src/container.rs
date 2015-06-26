@@ -203,6 +203,27 @@ impl Container {
 
         check_lxc_error(ret, "Creating container failed")
     }
+
+    pub fn rename(&mut self, new_name: &str) -> Result<()> {
+        let new_name = CString::new(new_name).unwrap().as_ptr();
+        check_lxc_error(unsafe { lxc_call!(self.container, rename, new_name) },
+                        "Renaming container failed")
+    }
+
+    pub fn reboot(&mut self) -> Result<()> {
+        check_lxc_error(unsafe { lxc_call!(self.container, reboot) },
+                        "Rebooting container failed")
+    }
+
+    pub fn shutdown(&mut self, timeout: i32) -> Result<()> {
+        check_lxc_error(unsafe { lxc_call!(self.container, shutdown, timeout) },
+                        "Shutting down container failed")
+    }
+
+    // this returns Result<()> for consistency's sake
+    pub fn clear_config(&mut self) -> Result<()> {
+        Ok(unsafe { lxc_call!(self.container, clear_config) })
+    }
 }
 
 pub struct BDevSpecs {
